@@ -1,3 +1,5 @@
+using Moq;
+using Rhino.Mocks;
 using System;
 using System.Text;
 
@@ -28,8 +30,31 @@ namespace MockPerformance
             System.IO.File.WriteAllText(@"C:\sources\MockPerformance\MockPerformance\BloatedClass.cs", code);
         }
 
+
+        public interface IA
+        {
+            BloatedClass Test(BloatedClass b); // B is a crazy large object with ~2700 properties with backing fields
+        }
+
+        private static IA CreateRhinoMock()
+        {
+            var mock = MockRepository.GenerateMock<IA>();
+            mock.Stub(m => m.Test(Arg<BloatedClass>.Is.Anything)).Do(a => a);
+            return mock;
+        }
+
+        private static IA CreateMoqMock()
+        {
+            var mock = new Mock<IA>();
+            mock.Setup(m => m.Test(It.IsAny<BloatedClass>())).Returns(new BloatedClass());
+            return mock.Object;
+        }
+
+
         static void Main(string[] args)
         {
+
+
 
             Console.ReadKey();
         }
