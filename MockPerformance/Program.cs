@@ -1,3 +1,4 @@
+using BenchmarkDotNet.Attributes;
 using Moq;
 using Rhino.Mocks;
 using System;
@@ -5,6 +6,30 @@ using System.Text;
 
 namespace MockPerformance
 {
+    public interface IA
+    {
+        BloatedClass Test(BloatedClass b); // B is a crazy large object with ~2700 properties with backing fields
+    }
+
+    public class MockBenchmarkTest
+    {
+        [Benchmark]
+        public IA CreateRhinoMock()
+        {
+            var mock = Rhino.Mocks.MockRepository.GenerateMock<IA>();
+            mock.Stub(m => m.Test(Arg<BloatedClass>.Is.Anything)).Do((Func<BloatedClass, BloatedClass>)(a => a));
+            return mock;
+        }
+
+        [Benchmark]
+        public IA CreateMoqMock()
+        {
+            var mock = new Mock<IA>();
+            mock.Setup(m => m.Test(It.IsAny<BloatedClass>())).Callback((Func<BloatedClass, BloatedClass>)(a => a));
+            return mock.Object;
+        }
+    }
+
     class Program
     {
         public const string ClassTemplate =
@@ -30,32 +55,11 @@ namespace MockPerformance
             System.IO.File.WriteAllText(@"C:\sources\MockPerformance\MockPerformance\BloatedClass.cs", code);
         }
 
-
-        public interface IA
-        {
-            BloatedClass Test(BloatedClass b); // B is a crazy large object with ~2700 properties with backing fields
-        }
-
-        private static IA CreateRhinoMock()
-        {
-            var mock = MockRepository.GenerateMock<IA>();
-            mock.Stub(m => m.Test(Arg<BloatedClass>.Is.Anything)).Do(a => a);
-            return mock;
-        }
-
-        private static IA CreateMoqMock()
-        {
-            var mock = new Mock<IA>();
-            mock.Setup(m => m.Test(It.IsAny<BloatedClass>())).Returns(new BloatedClass());
-            return mock.Object;
-        }
-
-
         static void Main(string[] args)
         {
-
-
-
+            var mock = new Mock<IA>();
+            mock.Setup(m => m.Test(It.IsAny<BloatedClass>())).Callback((Func<BloatedClass, BloatedClass>)(a => a));
+            //var summary = BenchmarkRunner.Run<MockBenchmarkTest>();
             Console.ReadKey();
         }
     }
