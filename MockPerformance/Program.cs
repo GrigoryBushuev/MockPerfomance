@@ -1,4 +1,5 @@
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Running;
 using Moq;
 using Rhino.Mocks;
 using System;
@@ -25,7 +26,7 @@ namespace MockPerformance
         public IA CreateMoqMock()
         {
             var mock = new Mock<IA>();
-            mock.Setup(m => m.Test(It.IsAny<BloatedClass>())).Callback((Func<BloatedClass, BloatedClass>)(a => a));
+            mock.Setup(m => m.Test(It.IsAny<BloatedClass>())).Returns<BloatedClass>(a => a);
             return mock.Object;
         }
     }
@@ -57,9 +58,7 @@ namespace MockPerformance
 
         static void Main(string[] args)
         {
-            var mock = new Mock<IA>();
-            mock.Setup(m => m.Test(It.IsAny<BloatedClass>())).Callback((Func<BloatedClass, BloatedClass>)(a => a));
-            //var summary = BenchmarkRunner.Run<MockBenchmarkTest>();
+            var summary = BenchmarkRunner.Run<MockBenchmarkTest>();
             Console.ReadKey();
         }
     }
